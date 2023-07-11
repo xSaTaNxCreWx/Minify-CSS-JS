@@ -67,21 +67,27 @@ class Minify {
 		if ( ! empty( $this->minify_path ) ) {
 			// Перебираем наш массив и обрабатываем каждый путь
 			foreach ( $this->minify_path as $file_path ) {
-				// Получаем имя нового файла
-				$name = $this->get_minify_name( $file_path );
-				$api_url = $this->get_api_url( $file_path );
+				// Проверяем что файл есть
+				if ( file_exists( $file_path ) ) {
 
-				// Делаем проверку на актуальность
-				if ( $this->is_actual_version( $file_path, $name ) && $api_url ) {
-					// Открываем "новый" файл или создаем его
-					$handler = fopen( $name, 'w' ) or die( "Ошибка создания файла <b>" . $name . '</b><br />' );
-					// Записываем ответ в файл
-					fwrite( $handler, $this->get_minify( $api_url, file_get_contents( $file_path ) ) );
-					// Закрываем файл
-					fclose( $handler );
-					echo "Файл <b>" . $name . '</b> создан!<br />';
+					// Получаем имя нового файла
+					$name = $this->get_minify_name( $file_path );
+					$api_url = $this->get_api_url( $file_path );
+
+					// Делаем проверку на актуальность
+					if ( $this->is_actual_version( $file_path, $name ) && $api_url ) {
+						// Открываем "новый" файл или создаем его
+						$handler = fopen( $name, 'w' ) or die( "Ошибка создания файла <b>" . $name . '</b><br />' );
+						// Записываем ответ в файл
+						fwrite( $handler, $this->get_minify( $api_url, file_get_contents( $file_path ) ) );
+						// Закрываем файл
+						fclose( $handler );
+						echo "Файл <b>" . $name . '</b> создан!<br />';
+					} else {
+						echo "Файл <b>" . $name . '</b> пропущен. В файлах <b>' . $file_path . '</b> нет изменений.<br />';
+					}
 				} else {
-					echo "Файл <b>" . $name . '</b>  пропущен. В файлах <b>' . $file_path . '</b> нет изменений.<br />';
+					echo "Файл <b>" . $file_path . '</b> не найден. Проверьте правильность пути.<br />';
 				}
 
 			}
@@ -156,7 +162,14 @@ class Minify {
 		curl_setopt_array( $ch, array(
 			CURLOPT_URL            => $url,
 			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_POST           => true,
+			CURLOPT_SSL_VERIFYPEER => false,
+			CURLOPT_SSL_VERIFYHOST => false,
+			CURLOPT_ENCODING => '',
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => 'POST',
 			CURLOPT_HTTPHEADER     => array( "Content-Type: application/x-www-form-urlencoded" ),
 			CURLOPT_POSTFIELDS     => http_build_query( array( "input" => $content ) )
 		) );
